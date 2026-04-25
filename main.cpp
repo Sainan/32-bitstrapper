@@ -11,10 +11,15 @@
 #include <DetourHookNoreg.hpp>
 #include <Module.hpp>
 #include <pattern_macros.hpp>
+#include <string.hpp>
+#include <unicode.hpp>
 #include <Uri.hpp>
 
 using namespace soup;
 
+
+static std::string server_host = "127.0.0.1";
+static uint16_t http_port = 80;
 
 static char build_version[16] = { 0 };
 
@@ -75,7 +80,7 @@ static bool __cdecl name_lookup_detour(void* out, GameString* name, bool a3)
 	std::string override;
 	if (sv.find("warframe.com") != std::string::npos)
 	{
-		override = "127.0.0.1";
+		override = server_host;
 		if (const char* sep = strchr(name->ptr, ':'))
 		{
 			override.append(sep);
@@ -104,8 +109,8 @@ static void* __thiscall game_http_request_detour(void* a1, uintptr_t request)
 
 	Uri uri((const char*)request_url.ptr);
 	uri.scheme = "http";
-	uri.host = "localhost";
-	uri.port = 80;
+	uri.host = server_host;
+	uri.port = http_port;
 
 	if (uri.path == "/api/login.php" || uri.path == "/dynamic/worldState.php")
 	{
@@ -190,6 +195,29 @@ BOOL DllMain(HMODULE hmod, DWORD reason, PVOID)
 #if LOGGING
 		std::cout << "build_version = " << std::string(build_version, 16) << std::endl;
 #endif
+
+		{
+			std::vector<std::string> args{};
+			{
+				int argc;
+				wchar_t** argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+				for (int i = 0; i != argc; ++i)
+				{
+					args.emplace_back(unicode::utf16_to_utf8<std::wstring>(argv[i]));
+				}
+			}
+			for (const auto& arg : args)
+			{
+				if (arg.size() > 15 && arg.substr(0, 15) == "-owfServerHost:")
+				{
+					server_host = arg.substr(15);
+				}
+				else if (arg.size() > 13 && arg.substr(0, 13) == "-owfHttpPort:")
+				{
+					string::toIntOpt<uint16_t>(arg.substr(13)).consume(http_port);
+				}
+			}
+		}
 
 		{
 			SIG_INST("89 4C 24 ? 52 B9 ? ? ? ? 89 44 24 ? E8"); // 2014.04.23.18.00, 2013.09.24.17.38, 2013.08.14.11.28, 2013.07.15.20.46
