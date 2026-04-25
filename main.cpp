@@ -44,7 +44,7 @@ static void __thiscall parse_arguments_detour(void* a1, GameString* str, void* a
 		injected_args = true;
 
 		//char args_to_inject[] = "-fullscreen:0 -cluster:public -webserver:http://localhost/api/"; // U7-U8
-		char args_to_inject[] = "-fullscreen:0 -cluster:public -language:zh"; // 2014.04.23.18.00
+		char args_to_inject[] = "-fullscreen:0 -cluster:public";
 
 		GameString tmp;
 		tmp.setUnownedData(args_to_inject, sizeof(args_to_inject) - 1);
