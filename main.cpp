@@ -72,11 +72,16 @@ static bool __cdecl name_lookup_detour(void* out, GameString* name, bool a3)
 #if LOGGING
 	//std::cout << "name_lookup: " << sv << std::endl;
 #endif
+	std::string override;
 	if (sv.find("warframe.com") != std::string::npos)
 	{
-		name->setUnownedData("127.0.0.1", strlen("127.0.0.1"));
+		override = "127.0.0.1";
+		if (const char* sep = strchr(name->ptr, ':'))
+		{
+			override.append(sep);
+		}
+		name->setUnownedData(override.data(), override.size());
 	}
-	// TODO: Keep port to avoid DNS popup & fix IRC connection errors
 	// TODO: Request tunables for correct NRS/IRC addressses
 	return reinterpret_cast<decltype(&name_lookup_detour)>(name_lookup_hook.original)(out, name, a3);
 }
