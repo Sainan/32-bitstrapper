@@ -1,3 +1,4 @@
+#define TITLE "32-Bitstrapper v0.2.0"
 #define LOGGING false
 
 
@@ -124,6 +125,12 @@ static void* __thiscall game_http_request_detour(void* a1, uintptr_t request)
 			uri.query.append(build_version, 16);
 			uri.query.push_back('/');
 		}
+
+		if (!uri.query.empty())
+		{
+			uri.query.push_back('&');
+		}
+		uri.query.append("clientMod=" TITLE);
 	}
 
 	std::string url_buf = uri.toString();
@@ -167,7 +174,7 @@ BOOL DllMain(HMODULE hmod, DWORD reason, PVOID)
 	{
 #if LOGGING
 		AllocConsole();
-		SetConsoleTitleA("32-Bitstrapper");
+		SetConsoleTitleA(TITLE);
 		{
 			FILE* f;
 			freopen_s(&f, "CONIN$", "r", stdin);

@@ -14,3 +14,7 @@ Supported versions:
 32-Bitstrapper adds the following command line arguments, which can be used for configuration:
 - `owfServerHost` (default: 127.0.0.1)
 - `owfHttpPort` (default: 80)
+
+## Traffic Deviations
+
+- login.php & worldState.php requests have two query parameters added: `buildLabel` to indicate the client's buildLabel, and `clientMod` to indicate the 32-Bitstrapper's name and version.
