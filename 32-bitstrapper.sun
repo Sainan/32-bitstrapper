@@ -1,0 +1,5 @@
+name 32-bitstrapper
+dynamic
++*.cpp
+require ../Soup/soup
+32bit
