@@ -89,14 +89,20 @@ static bool __cdecl name_lookup_detour(void* out, GameString* name, bool a3)
 
 static DetourHookNoreg game_http_request_hook;
 
-static void* __thiscall game_http_request_detour(void* a1, GameString* str)
+static void* __thiscall game_http_request_detour(void* a1, uintptr_t request)
 {
+	GameString& request_url = *reinterpret_cast<GameString*>(request + 0x00);
+	GameString& request_body = *reinterpret_cast<GameString*>(request + 0x2C); // Offset for 2014.04.23.18.00. Very likely wrong for other versions.
+
 #if LOGGING
-	//std::string_view sv(str->ptr, str->len);
-	//std::cout << "game_http_request: " << sv << std::endl;
+	std::cout << "game_http_request for " << std::string_view(request_url.ptr, request_url.len) << std::endl;
+	/*if (request_body.len)
+	{
+		std::cout << std::string_view(request_body.ptr, request_body.len) << std::endl;
+	}*/
 #endif
 
-	Uri uri((const char*)str->ptr);
+	Uri uri((const char*)request_url.ptr);
 	uri.scheme = "http";
 	uri.host = "localhost";
 	uri.port = 80;
@@ -116,9 +122,26 @@ static void* __thiscall game_http_request_detour(void* a1, GameString* str)
 	}
 
 	std::string url_buf = uri.toString();
-	str->setUnownedData(url_buf.data(), url_buf.size());
+	request_url.setUnownedData(url_buf.data(), url_buf.size());
 
-	return reinterpret_cast<decltype(&game_http_request_detour)>(game_http_request_hook.original)(a1, str);
+#if true // Censor process list
+	std::string body_buf;
+	{
+		std::string_view body(request_body.ptr, request_body.len);
+		if (auto pos = body.find(R"("processes":")"); pos != std::string::npos)
+		{
+			if (auto epos = body.find('"', pos + 13); epos != std::string::npos)
+			{
+				body_buf = body.substr(0, pos + 17);
+				body_buf.append("W0RFXVN0ZXZlIGxpa2VzIGJpZyBidXR0cw");
+				body_buf.append(body.substr(epos));
+				request_body.setUnownedData(body_buf.data(), body_buf.size());
+			}
+		}
+	}
+#endif
+
+	return reinterpret_cast<decltype(&game_http_request_detour)>(game_http_request_hook.original)(a1, request);
 }
 
 
